@@ -22,6 +22,7 @@
 
 (define-minor-mode spip-mode
   "A minor mode for the SPIP CMS."
+  nil " SPIP " nil
   (if (not (stringp spip-root))
       (setq spip-root (get-spip-root)))
   ;; If not in a SPIP project, get out.
@@ -43,7 +44,7 @@
 Returns nil if not in a SPIP project."
 
   (let* ((path (directory-file-name
-               (expand-file-name default-directory)))
+                (expand-file-name default-directory)))
          (parents (list path)))
 
     (while (not (string= path ""))
