@@ -17,6 +17,8 @@
 
 ;;; Code:
 
+(require 'json)
+
 (defvar spip-root nil
   "The root directory of the current SPIP project.")
 
@@ -55,6 +57,26 @@ Returns nil if not in a SPIP project."
       (add-to-list 'parents path))
 
     (spip-get-directory (locate-file "spip.php" parents))))
+
+(defun get-spip-path ()
+  "Return the vector of the directories that make the SPIP path."
+
+  (condition-case err
+      (json-read-from-string
+       (spip-eval-php "echo json_encode(creer_chemin());"))
+    (end-of-file
+     (error "Couldn't compute path"))
+    (json-readtable-error
+     (error "Couldn't compute path"))))
+
+(defun spip-eval-php (php-code)
+  "Evaluates the given php code in the current SPIP instance
+  using SPIP-CLI's php:eval command."
+
+  (if (not (string= (shell-command-to-string "which spip") ""))
+      (shell-command-to-string (format "spip php:eval \"%s\"" php-code))
+    (error "Couldn't find the spip executable."))
+  )
 
 (defun spip-get-directory (filename)
   "Returns the directory component of FILENAME."
