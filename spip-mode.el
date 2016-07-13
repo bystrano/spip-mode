@@ -18,6 +18,7 @@
 ;;; Code:
 
 (require 'json)
+(require 's)
 
 (defvar spip-root nil
   "The root directory of the current SPIP project.")
@@ -68,6 +69,36 @@ Returns nil if not in a SPIP project."
      (error "Couldn't compute path"))
     (json-readtable-error
      (error "Couldn't compute path"))))
+
+(defun get-spip-override-targets ()
+  "Return a list of directories that can be used to override the
+  current file."
+
+  (let ((path (mapcar 'identity (get-spip-path)))
+        (result (list))
+        (dir nil))
+    (while path
+      (setq dir (pop path))
+      (if (s-starts-with-p (concat spip-root "/" dir) default-directory)
+          (setq path nil) ;; end the loop
+        (setq result (push dir result))))
+    result))
+
+(defun helm-spip-override-candidates ()
+  (mapcar (lambda (dir)
+            (cons (format "%s" dir) dir))
+          (get-spip-override-targets)))
+
+(defvar helm-source-spip-override
+  nil)
+(setq helm-source-spip-override
+  '((name . "SPIP override")
+    (candidates-process . helm-spip-override-candidates)))
+
+(defun helm-spip-override ()
+  (interactive)
+  (helm :sources '(helm-source-spip-override)))
+
 
 (defun spip-eval-php (php-code)
   "Evaluates the given php code in the current SPIP instance
