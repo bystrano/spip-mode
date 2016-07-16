@@ -106,6 +106,14 @@ component is the path from this directory to FILENAME."
 
 (defvar spip-override-original-file nil)
 
+(defun helm-spip-override-file (dir)
+
+  (let* ((file (plist-get (split-on-path spip-override-original-file) :file))
+         (filepath (concat spip-root dir file)))
+    (find-file filepath)
+    (if (not (file-exists-p filepath))
+      (insert-file-contents spip-override-original-file))))
+
 (defun helm-spip-override-init ()
   (setq spip-override-original-file buffer-file-name))
 
@@ -117,7 +125,8 @@ component is the path from this directory to FILENAME."
 (defvar helm-source-spip-override
   '((name . "SPIP override")
     (candidates . helm-spip-override-candidates)
-    (init . helm-spip-override-init)))
+    (init . helm-spip-override-init)
+    (action . (("Override" . helm-spip-override-file)))))
 
 (defun spip-override ()
   "Override the current file.
