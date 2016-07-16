@@ -84,18 +84,27 @@ Returns nil if not in a SPIP project."
         (setq result (push dir result))))
     result))
 
+(defvar spip-override-original-file nil)
+
+(defun helm-spip-override-init ()
+  (setq spip-override-original-file buffer-file-name))
+
 (defun helm-spip-override-candidates ()
   (mapcar (lambda (dir)
             (cons (format "%s" dir) dir))
-          (get-spip-override-targets)))
+          (get-spip-override-targets spip-override-original-file)))
 
 (defvar helm-source-spip-override
-  nil)
-(setq helm-source-spip-override
   '((name . "SPIP override")
-    (candidates-process . helm-spip-override-candidates)))
+    (candidates . helm-spip-override-candidates)
+    (init . helm-spip-override-init)))
 
-(defun helm-spip-override ()
+(defun spip-override ()
+  "Override the current file.
+
+Ask for a destination directory, then create a new file at the
+right place and copy the original content inside it. If the
+target file already exists, we simply open it."
   (interactive)
   (helm :sources '(helm-source-spip-override)))
 
