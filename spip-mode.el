@@ -70,8 +70,8 @@ Returns nil if not in a SPIP project."
     (json-readtable-error
      (error "Couldn't compute path"))))
 
-(defun get-spip-override-targets (filepath)
-  "Return a list of directories that can be used to override the
+(defun get-spip-overload-targets (filepath)
+  "Return a list of directories that can be used to overload the
   current file."
 
   (let ((path (mapcar 'identity (get-spip-path)))
@@ -104,38 +104,38 @@ component is the path from this directory to FILENAME."
                                :file (s-chop-prefix dir filepath))))))
     result))
 
-(defvar spip-override-original-file nil)
+(defvar spip-overload-original-file nil)
 
-(defun helm-spip-override-file (dir)
+(defun helm-spip-overload-file (dir)
 
-  (let* ((file (plist-get (split-on-path spip-override-original-file) :file))
+  (let* ((file (plist-get (split-on-path spip-overload-original-file) :file))
          (filepath (concat spip-root dir file)))
     (find-file filepath)
     (if (not (file-exists-p filepath))
-      (insert-file-contents spip-override-original-file))))
+      (insert-file-contents spip-overload-original-file))))
 
-(defun helm-spip-override-init ()
-  (setq spip-override-original-file buffer-file-name))
+(defun helm-spip-overload-init ()
+  (setq spip-overload-original-file buffer-file-name))
 
-(defun helm-spip-override-candidates ()
+(defun helm-spip-overload-candidates ()
   (mapcar (lambda (dir)
             (cons (format "%s" dir) dir))
-          (get-spip-override-targets spip-override-original-file)))
+          (get-spip-overload-targets spip-overload-original-file)))
 
-(defvar helm-source-spip-override
-  '((name . "SPIP override")
-    (candidates . helm-spip-override-candidates)
-    (init . helm-spip-override-init)
-    (action . (("Override" . helm-spip-override-file)))))
+(defvar helm-source-spip-overload
+  '((name . "SPIP overload")
+    (candidates . helm-spip-overload-candidates)
+    (init . helm-spip-overload-init)
+    (action . (("Overload" . helm-spip-overload-file)))))
 
-(defun spip-override ()
-  "Override the current file.
+(defun spip-overload ()
+  "Overload the current file.
 
 Ask for a destination directory, then create a new file at the
 right place and copy the original content inside it. If the
 target file already exists, we simply open it."
   (interactive)
-  (helm :sources '(helm-source-spip-override)))
+  (helm :sources '(helm-source-spip-overload)))
 
 
 (defun spip-eval-php (php-code)
