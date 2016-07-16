@@ -70,18 +70,38 @@ Returns nil if not in a SPIP project."
     (json-readtable-error
      (error "Couldn't compute path"))))
 
-(defun get-spip-override-targets ()
+(defun get-spip-override-targets (filepath)
   "Return a list of directories that can be used to override the
   current file."
 
   (let ((path (mapcar 'identity (get-spip-path)))
+        (path-components (split-on-path filepath))
         (result (list))
         (dir nil))
     (while path
       (setq dir (pop path))
-      (if (s-starts-with-p (concat spip-root "/" dir) default-directory)
+      (if (equal dir (plist-get path-components :path))
           (setq path nil) ;; end the loop
         (setq result (push dir result))))
+    result))
+
+(defun split-on-path (filepath)
+  "Extract the path and the file component of FILENAME.
+
+The path component is the path from the spip-root directory to
+the directory in the path to which FILEPATH belongs, and the file
+component is the path from this directory to FILENAME."
+
+  (let ((path (mapcar 'identity (get-spip-path)))
+        (result nil)
+        (dir nil))
+    (while path
+      (setq dir (concat spip-root (pop path)))
+      (if (s-starts-with-p dir filepath)
+          (progn
+            (setq path nil ;; end the loop
+                  result (list :path (s-chop-prefix spip-root dir)
+                               :file (s-chop-prefix dir filepath))))))
     result))
 
 (defvar spip-override-original-file nil)
