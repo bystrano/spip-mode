@@ -113,10 +113,11 @@ Returns nil if not in a SPIP project."
   "Returns the directory component of FILENAME."
 
   (if (stringp filename)
-      (directory-file-name
-       (mapconcat  'identity
-                   (reverse (cdr (reverse (split-string filename "/"))))
-                   "/"))))
+      (s-append "/"
+                (directory-file-name
+                 (mapconcat  'identity
+                             (reverse (cdr (reverse (split-string filename "/"))))
+                             "/")))))
 
 (provide spip-mode)
 ;;; spip-mode.el ends here
