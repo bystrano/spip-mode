@@ -31,8 +31,7 @@
 (define-minor-mode spip-mode
   "A minor mode for the SPIP CMS."
   nil " SPIP " nil
-  (if (not (stringp spip-root))
-      (setq spip-root (get-spip-root)))
+  (setq spip-root (get-spip-root))
   ;; If not in a SPIP project, get out.
   (if (not (stringp spip-root))
       (setq spip-mode nil)))
