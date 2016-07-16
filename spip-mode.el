@@ -8,12 +8,17 @@
 ;;; SPIP. PHP-mode utilise les règles de codage SPIPiennes,
 ;;; web-mode colore les boucles, filtres et balise SPIP.
 
+;;; Fournit une commande Helm pour la gestion des surcharges de
+;;; fichiers du core. La commande spip-overload permet de
+;;; surcharger le fichier courant. On propose une liste de
+;;; répertoires candidats pour la surcharge, et la commande se
+;;; charge ensuite de créer un nouveau fichier au bon endroit,
+;;; d'y copier le contenu du fichier actuel et de l'ouvrir dans
+;;; un nouveau buffer.
+
 ;;; TODO:
 
 ;;; Fournit des commandes pour la gestion des chaînes de langue
-
-;;; Fournit des commandes pour la gestion des surcharges de
-;;; fichiers du core.
 
 ;;; Code:
 
@@ -70,21 +75,6 @@ Returns nil if not in a SPIP project."
     (json-readtable-error
      (error "Couldn't compute path"))))
 
-(defun get-spip-overload-targets (filepath)
-  "Return a list of directories that can be used to overload the
-  current file."
-
-  (let ((path (mapcar 'identity (get-spip-path)))
-        (path-components (split-on-path filepath))
-        (result (list))
-        (dir nil))
-    (while path
-      (setq dir (pop path))
-      (if (equal dir (plist-get path-components :path))
-          (setq path nil) ;; end the loop
-        (setq result (push dir result))))
-    result))
-
 (defun split-on-path (filepath)
   "Extract the path and the file component of FILENAME.
 
@@ -104,29 +94,54 @@ component is the path from this directory to FILENAME."
                                :file (s-chop-prefix dir filepath))))))
     result))
 
-(defvar spip-overload-original-file nil)
+(defun get-spip-overload-targets (filepath)
+  "Return a list of directories that can be used to overload the
+  current file."
 
-(defun helm-spip-overload-file (dir)
+  (let ((path (mapcar 'identity (get-spip-path)))
+        (path-components (split-on-path filepath))
+        (result (list))
+        (dir nil))
+    (while path
+      (setq dir (pop path))
+      (if (equal dir (plist-get path-components :path))
+          (setq path nil) ;; end the loop
+        (setq result (push dir result))))
+    result))
 
-  (let* ((file (plist-get (split-on-path spip-overload-original-file) :file))
-         (filepath (concat spip-root dir file)))
-    (find-file filepath)
-    (if (not (file-exists-p filepath))
-      (insert-file-contents spip-overload-original-file))))
+;;;;;;;;;;
+;; Helm
 
-(defun helm-spip-overload-init ()
-  (setq spip-overload-original-file buffer-file-name))
-
-(defun helm-spip-overload-candidates ()
-  (mapcar (lambda (dir)
-            (cons (format "%s" dir) dir))
-          (get-spip-overload-targets spip-overload-original-file)))
+(defvar spip-helm-original-file nil
+  "The file that was open when spip-overload was called. internal
+  use only")
 
 (defvar helm-source-spip-overload
   '((name . "SPIP overload")
-    (candidates . helm-spip-overload-candidates)
-    (init . helm-spip-overload-init)
-    (action . (("Overload" . helm-spip-overload-file)))))
+    (candidates . spip-helm-overload-candidates)
+    (init . spip-helm-overload-init)
+    (action . (("Overload" . spip-helm-overload-file))))
+  "Configuration of the spip-overload Helm command.")
+
+(defun spip-helm-overload-init ()
+  (setq spip-helm-original-file buffer-file-name))
+
+(defun spip-helm-overload-candidates ()
+
+  (mapcar (lambda (dir)
+            (cons (format "%s" dir) dir))
+          (get-spip-overload-targets spip-helm-original-file)))
+
+(defun spip-helm-overload-file (dir)
+
+  (let* ((file (plist-get
+                (split-on-path spip-helm-original-file)
+                :file))
+         (filepath (concat spip-root dir file)))
+
+    (find-file filepath)
+    (if (not (file-exists-p filepath))
+        (insert-file-contents spip-helm-original-file))))
 
 (defun spip-overload ()
   "Overload the current file.
@@ -137,6 +152,8 @@ target file already exists, we simply open it."
   (interactive)
   (helm :sources '(helm-source-spip-overload)))
 
+;;;;;;;;;;;
+;; Utils
 
 (defun spip-eval-php (php-code)
   "Evaluates the given php code in the current SPIP instance
@@ -144,8 +161,7 @@ target file already exists, we simply open it."
 
   (if (not (string= (shell-command-to-string "which spip") ""))
       (shell-command-to-string (format "spip php:eval \"%s\"" php-code))
-    (error "Couldn't find the spip executable."))
-  )
+    (error "Couldn't find the spip executable.")))
 
 (defun spip-get-directory (filename)
   "Returns the directory component of FILENAME."
