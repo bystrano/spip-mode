@@ -75,6 +75,18 @@ Returns nil if not in a SPIP project."
     (json-readtable-error
      (error "Couldn't compute path"))))
 
+(defun spip-find-in-path (file)
+  "Finds a file in SPIP's path."
+
+  (condition-case err
+      (json-read-from-string
+       (spip-eval-php (format "echo json_encode(find_in_path('%s'));"
+                              file)))
+    (end-of-file
+     (error "Could not find file"))
+    (json-readtable-error
+     (error "Could not find file"))))
+
 (defun split-on-path (filepath)
   "Extract the path and the file component of FILENAME.
 
@@ -256,6 +268,32 @@ target file already exists, we simply open it."
                     (mapcar (lambda (dir)
                               (concat spip-root dir "lang/"))
                             (get-spip-path))))))
+
+(defun spip-jump-to-lang-string-definition ()
+  "Jump to the definition of the lang string at point."
+  (interactive)
+
+  (let* ((full-string (spip-lang-string-at-point))
+         (module (car (s-split ":" full-string)))
+         (lang-key (cadr (s-split ":" full-string)))
+         (module-file (spip-find-in-path
+                       (format "lang/%s_fr.php" module))))
+
+    (with-current-buffer (find-file (concat spip-root module-file))
+      (let ((selection-beg nil)
+            (selection-end nil))
+        (goto-line 1)
+        (save-excursion
+          (re-search-forward (format "['\"]%s['\"]" lang-key))
+          (setq selection-beg (re-search-forward "['\"]"))
+          (setq selection-end (- (re-search-forward
+                                  (format "[^\\]%s"
+                                          (buffer-substring (- (point) 1)
+                                                            (point))))
+                                 1)))
+        (goto-char selection-beg)
+        (push-mark selection-end)
+        (setq mark-active t)))))
 
 ;;;;;;;;;;;
 ;; Utils
