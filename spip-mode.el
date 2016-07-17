@@ -276,8 +276,9 @@ target file already exists, we simply open it."
   (let* ((full-string (spip-lang-string-at-point))
          (module (car (s-split ":" full-string)))
          (lang-key (cadr (s-split ":" full-string)))
+         (lang (spip-select-lang))
          (module-file (spip-find-in-path
-                       (format "lang/%s_fr.php" module))))
+                       (format "lang/%s_%s.php" module lang))))
 
     (with-current-buffer (find-file (concat spip-root module-file))
       (let ((selection-beg nil)
@@ -295,8 +296,56 @@ target file already exists, we simply open it."
         (push-mark selection-end)
         (setq mark-active t)))))
 
+(defvar spip-lang nil
+  "The currently selected language.")
+
+(defvar helm-source-spip-active-lang nil
+  "Configuration of the spip-select-lang-command.")
+(setq helm-source-spip-active-lang
+      '((name . "Langues actives")
+        (candidates . spip-get-active-languages)
+        (action . (("Select" . spip-helm-select-lang)))))
+
+(defvar helm-source-spip-existing-lang nil
+  "Configuration of the spip-select-lang-command.")
+(setq helm-source-spip-available-lang
+      '((name . "Langues proposées")
+        (candidates . spip-get-available-languages)
+        (action . (("Select" . spip-helm-select-lang)))))
+
+(defun spip-get-active-languages ()
+
+  (mapcar (lambda (lang)
+            (cons (format "%s" lang) lang))
+          (if (> (length (spip-lire-config "langues_multilingue")) 0)
+              (s-split "," (spip-lire-config "langues_multilingue"))
+            (list (spip-lire-config "langue_site")))))
+
+(defun spip-get-available-languages ()
+
+  (mapcar (lambda (lang)
+            (cons (format "%s" lang) lang))
+          (s-split "," (spip-lire-config "langues_proposees"))))
+
+(defun spip-helm-select-lang (lang)
+
+  (setq spip-lang lang))
+
+(defun spip-select-lang ()
+  "Return a language code chosen by the user."
+
+  (helm :sources '(helm-source-spip-active-lang
+                   helm-source-spip-available-lang))
+  spip-lang)
+
 ;;;;;;;;;;;
 ;; Utils
+
+(defun spip-lire-config (meta)
+
+  (spip-eval-php (format
+                  "include_spip('inc/config'); echo lire_config('%s');"
+                  meta)))
 
 (defun spip-eval-php (php-code)
   "Evaluates the given php code in the current SPIP instance
