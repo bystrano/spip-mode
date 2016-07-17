@@ -155,6 +155,55 @@ target file already exists, we simply open it."
 ;;;;;;;;;;;
 ;; Lang
 
+(defun spip-group-lang-modules (module-files)
+
+  (let ((modules '()))
+    (while (not (equal 0 (length module-files)))
+      (let ((file (pop module-files)))
+        (if (not (s-matches-p "\.php$" file))
+            (error "not a php file")
+          (let ((words (reverse (s-split "_" (s-replace ".php" "" file))))
+                (module nil)
+                (lang nil)
+                (lang_end nil))
+            (while (not (equal 0 (length words)))
+              (let ((word (pop words)))
+                (if (or lang_end (> (length word) 3))
+                    (progn
+                      (setq lang_end t)
+                      (add-to-list 'module word))
+                  (add-to-list 'lang word))))
+
+            (setq module (s-join "_" module))
+            (setq lang (s-join "_" lang))
+
+            (let ((existing-module (assoc module modules)))
+              (if (not existing-module)
+                  (add-to-list 'modules (cons module (list lang)))
+                (setcdr (assoc module modules)
+                        (-uniq
+                         (append
+                          (cdr existing-module) (list lang))))))))))
+    modules))
+
+(ert-deftest test-spip-group-lang-modules ()
+  "lang module classification."
+  (should (equal (spip-group-lang-modules
+                  '("spip_fr.php" "spip_nl.php"))
+                 '(("spip" . ("fr" "nl")))))
+  (should (equal (spip-group-lang-modules
+                  '("spip_fr.php" "spip_nl.php" "local_nl.php"))
+                 '(("local" . ("nl")) ("spip" . ("fr" "nl")))))
+  (should (equal (spip-group-lang-modules
+                  '("spip_bonux_pt_br.php"))
+                 '(("spip_bonux" . ("pt_br")))))
+  (should (equal (spip-group-lang-modules
+                  '("pb_selection_oc_mis_bla.php"))
+                 '(("pb_selection" . ("oc_mis_bla")))))
+  (should (equal (spip-group-lang-modules
+                  '("spip_fr.php" "spip_fr.php"))
+                 '(("spip" . ("fr"))))))
+
 (defun spip-get-lang-module-files ()
 
   (-flatten
