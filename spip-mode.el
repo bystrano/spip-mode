@@ -316,7 +316,7 @@ target file already exists, we simply open it."
 (defun spip-get-active-languages ()
 
   (mapcar (lambda (lang)
-            (cons (format "%s" lang) lang))
+            (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
           (if (> (length (spip-lire-config "langues_multilingue")) 0)
               (s-split "," (spip-lire-config "langues_multilingue"))
             (list (spip-lire-config "langue_site")))))
@@ -325,6 +325,7 @@ target file already exists, we simply open it."
 
   (mapcar (lambda (lang)
             (cons (format "%s" lang) lang))
+            ;; (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
           (s-split "," (spip-lire-config "langues_proposees"))))
 
 (defun spip-helm-select-lang (lang)
@@ -340,6 +341,14 @@ target file already exists, we simply open it."
 
 ;;;;;;;;;;;
 ;; Utils
+
+(defun spip-translate-lang-string (lang-string &optional lang)
+
+  (let* ((option-string (if (stringp lang)
+                           (format ", array('spip_lang' => '%s')" lang)
+                         ""))
+         (command (format "echo _T('%s'%s);" lang-string option-string)))
+    (spip-eval-php command)))
 
 (defun spip-lire-config (meta)
 
