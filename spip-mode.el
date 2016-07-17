@@ -155,6 +155,49 @@ target file already exists, we simply open it."
 ;;;;;;;;;;;
 ;; Lang
 
+(defun spip-font-block-at-point ()
+  "Returns the biggest string around point that has the same font-face."
+
+  (let ((start (point))
+        (end (point))
+        (face (get-text-property (point) 'face)))
+    (save-excursion
+      (let ((break nil))
+        (while (and (not break) (> (point) (line-beginning-position)))
+          (goto-char (- (point) 1))
+          (if (equal face (get-text-property (point) 'face))
+              (setq start (point))
+            (setq break t)))))
+    (save-excursion
+      (let ((break nil))
+        (while (and (not break) (< (point) (line-end-position)))
+          (if (equal face (get-text-property (point) 'face))
+              (setq end (+ 1 (point)))
+            (setq break t))
+          (goto-char (+ (point) 1)))))
+    (cons start end)))
+
+(defun spip-lang-string-at-point ()
+  "Return the lang string at point, or nil if the point isn't on one."
+
+  (let* ((reg (spip-font-block-at-point))
+         (beg (car reg))
+         (end (cdr reg)))
+    (cond
+     ((and (equal mode-name "Web")
+           (equal (get-text-property (point) 'face)'
+                  web-mode-block-string-face))
+      (let ((match (s-match "<:\\(.+\\):>"
+                            (buffer-substring-no-properties beg end))))
+        (elt match 1)))
+     ((and (equal mode-name "PHP/l")
+           (equal (get-text-property (point) 'face)
+                  font-lock-string-face))
+      (let ((match (s-match "['\"]\\(.+\\)['\"]"
+                            (buffer-substring-no-properties beg end))))
+        (if (s-contains-p ":" (elt match 1))
+            (elt match 1)))))))
+
 (defun spip-group-lang-modules (module-files)
 
   (let ((modules '()))
