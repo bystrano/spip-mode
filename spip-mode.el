@@ -24,6 +24,7 @@
 
 (require 'json)
 (require 's)
+(require 'dash)
 
 (defvar spip-root nil
   "The root directory of the current SPIP project.")
@@ -150,6 +151,19 @@ right place and copy the original content inside it. If the
 target file already exists, we simply open it."
   (interactive)
   (helm :sources '(helm-source-spip-overload)))
+
+;;;;;;;;;;;
+;; Lang
+
+(defun spip-get-lang-module-files ()
+
+  (-flatten
+   (mapcar (lambda (dir)
+             (directory-files dir nil ".*\.php$"))
+           (-filter 'file-exists-p
+                    (mapcar (lambda (dir)
+                              (concat spip-root dir "lang/"))
+                            (get-spip-path))))))
 
 ;;;;;;;;;;;
 ;; Utils
