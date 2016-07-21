@@ -125,12 +125,12 @@ return an explicit version, like 'spip:annuler'."
         (let ((module (pop modules)))
           (when (s-matches-p
                  (format "['\"]%s['\"]" lang-string)
-                 (-if-let (file (spip-find-in-path
+                 (-if-let* ((file (spip-find-in-path
                                   (format "lang/%s_fr.php" module)))
+                            (fullpath (concat spip-root file)))
                      (with-temp-buffer
-                       (progn
-                         (insert-file-contents (concat spip-root file))
-                         (buffer-string)))
+                       (insert-file-contents fullpath)
+                       (buffer-string))
                    ""))
             (setq modules nil ;; exit the loop
                   result (format "%s:%s" module lang-string)))))
@@ -236,14 +236,17 @@ return an explicit version, like 'spip:annuler'."
   "The value of spip-root when spip-overload was called. internal
   use only")
 
+(defvar spip-helm-env-lang nil
+  "The currently selected language.")
+
 (defvar helm-source-spip-overload
   '((name . "SPIP overload")
     (candidates . spip-helm-overload-candidates)
-    (init . spip-helm-overload-init)
+    (init . spip-helm-env-init)
     (action . (("Overload" . spip-helm-overload-file))))
   "Configuration of the spip-overload Helm command.")
 
-(defun spip-helm-overload-init ()
+(defun spip-helm-env-init ()
   (setq spip-helm-env-root spip-root
         spip-helm-env-file buffer-file-name))
 
@@ -281,46 +284,47 @@ target file already exists, we simply open it."
     ('spip-mode-error
      (spip-handle-error err))))
 
-(defvar spip-lang nil
-  "The currently selected language.")
-
 (defvar helm-source-spip-active-lang
   '((name . "Langues actives")
+    (init . spip-helm-env-init)
     (candidates . spip-get-active-languages)
     (action . (("Select" . spip-helm-select-lang))))
   "Configuration of the spip-select-lang-command.")
 
 (defvar helm-source-spip-available-lang
   '((name . "Langues proposées")
-   (candidates . spip-get-available-languages)
-   (action . (("Select" . spip-helm-select-lang))))
+    (init . spip-helm-env-init)
+    (candidates . spip-get-available-languages)
+    (action . (("Select" . spip-helm-select-lang))))
   "Configuration of the spip-select-lang-command.")
 
 (defun spip-get-active-languages ()
 
-  (mapcar (lambda (lang)
-            (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
-          (if (> (length (spip-lire-config "langues_multilingue")) 0)
-              (s-split "," (spip-lire-config "langues_multilingue"))
-            (list (spip-lire-config "langue_site")))))
+  (let ((spip-root spip-helm-env-root))
+    (mapcar (lambda (lang)
+              (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
+            (if (> (length (spip-lire-config "langues_multilingue")) 0)
+                (s-split "," (spip-lire-config "langues_multilingue"))
+              (list (spip-lire-config "langue_site"))))))
 
 (defun spip-get-available-languages ()
 
-  (mapcar (lambda (lang)
-            (cons (format "%s" lang) lang))
+  (let ((spip-root spip-helm-env-root))
+    (mapcar (lambda (lang)
+              (cons (format "%s" lang) lang))
             ;; (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
-          (s-split "," (spip-lire-config "langues_proposees"))))
+            (s-split "," (spip-lire-config "langues_proposees")))))
 
 (defun spip-helm-select-lang (lang)
 
-  (setq spip-lang lang))
+  (setq spip-helm-env-lang lang))
 
 (defun spip-select-lang ()
   "Return a language code chosen by the user."
 
   (helm :sources '(helm-source-spip-active-lang
                    helm-source-spip-available-lang))
-  spip-lang)
+  spip-helm-env-lang)
 
 ;;;;;;;;;;;
 ;; Utils
