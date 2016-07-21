@@ -300,7 +300,9 @@ target file already exists, we simply open it."
   "Configuration of the spip-select-lang-command.")
 
 (defun spip-format-lang (lang)
-  (spip-translate-lang-string "spip:0_langue" lang))
+  (spip-eval-php
+   (concat "include_spip('inc/lang_liste');"
+           (format "echo html_entity_decode($GLOBALS['codes_langues']['%s']);" lang))))
 
 (defun spip-get-active-languages ()
 
@@ -313,9 +315,10 @@ target file already exists, we simply open it."
 
 (defun spip-get-available-languages ()
 
-  (let ((spip-root spip-helm-env-root))
+  (let* ((spip-root spip-helm-env-root)
+         (lang-list (spip-get-language-list)))
     (mapcar (lambda (lang)
-              (cons (format "%s" lang) lang))
+              (cons (cdr (assoc-string lang lang-list)) lang))
             (s-split "," (spip-lire-config "langues_proposees")))))
 
 (defun spip-helm-select-lang (lang)
@@ -401,6 +404,20 @@ Returns nil if not in a SPIP project."
   "Finds a file in SPIP's path."
 
   (spip-get-object (format "find_in_path('%s')" file)))
+
+(defun spip-get-language-list ()
+
+  (if spip-root
+      (let ((get-json (concat
+                       "include_spip('inc/lang_liste');"
+                       "echo json_encode("
+                       "array_map('html_entity_decode', $GLOBALS['codes_langues'])"
+                       ");"
+                       ))
+            (json-false nil)
+            (json-null nil))
+        (json-read-from-string (spip-eval-php get-json)))
+    (signal 'not-in-spip nil)))
 
 (defun spip-translate-lang-string (lang-string &optional lang)
 
