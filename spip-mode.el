@@ -200,28 +200,29 @@ return an explicit version, like 'spip:annuler'."
   (interactive)
 
   (condition-case err
-      (let* ((full-string (spip-lang-string-at-point))
-             (module (car (s-split ":" full-string)))
-             (lang-key (cadr (s-split ":" full-string)))
-             (lang (spip-select-lang))
-             (module-file (spip-find-in-path
-                           (format "lang/%s_%s.php" module lang))))
+      (-if-let* ((full-string (spip-lang-string-at-point))
+                 (module (car (s-split ":" full-string)))
+                 (lang-key (cadr (s-split ":" full-string)))
+                 (lang (spip-select-lang))
+                 (module-file (spip-find-in-path
+                               (format "lang/%s_%s.php" module lang))))
 
-        (with-current-buffer (find-file (concat spip-root module-file))
-          (let ((selection-beg nil)
-                (selection-end nil))
-            (goto-char (point-min))
-            (save-excursion
-              (re-search-forward (format "['\"]%s['\"]" lang-key))
-              (setq selection-beg (re-search-forward "['\"]"))
-              (setq selection-end (- (re-search-forward
-                                      (format "[^\\]%s"
-                                              (buffer-substring (- (point) 1)
-                                                                (point))))
-                                     1)))
-            (goto-char selection-beg)
-            (push-mark selection-end)
-            (setq mark-active t))))
+          (with-current-buffer (find-file (concat spip-root module-file))
+            (let ((selection-beg nil)
+                  (selection-end nil))
+              (goto-char (point-min))
+              (save-excursion
+                (re-search-forward (format "['\"]%s['\"]" lang-key))
+                (setq selection-beg (re-search-forward "['\"]"))
+                (setq selection-end (- (re-search-forward
+                                        (format "[^\\]%s"
+                                                (buffer-substring (- (point) 1)
+                                                                  (point))))
+                                       1)))
+              (goto-char selection-beg)
+              (push-mark selection-end)
+              (setq mark-active t)))
+        (message "Not a lang string"))
     ('spip-mode-error
      (spip-handle-error err))))
 
