@@ -39,7 +39,7 @@
 
   (make-local-variable 'spip-root)
 
-  (setq spip-root (get-spip-root))
+  (setq spip-root (spip-get-root))
 
   ;; If not in a SPIP project, get out.
   (if (not (stringp spip-root))
@@ -55,7 +55,7 @@
   "Configures php-mode for SPIP."
   (spip-mode))
 
-(defun get-spip-root ()
+(defun spip-get-root ()
   "Return the root of the current SPIP project.
 Returns nil if not in a SPIP project."
 
@@ -72,7 +72,7 @@ Returns nil if not in a SPIP project."
 
     (spip-get-directory (locate-file "spip.php" parents))))
 
-(defun get-spip-path ()
+(defun spip-get-path ()
   "Return the vector of the directories that make the SPIP path."
 
   (if spip-root
@@ -94,14 +94,14 @@ Returns nil if not in a SPIP project."
         (json-read-from-string json))
     (signal 'not-in-spip nil)))
 
-(defun split-on-path (filepath)
+(defun spip-split-on-path (filepath)
   "Extract the path and the file component of FILENAME.
 
 The path component is the path from the spip-root directory to
 the directory in the path to which FILEPATH belongs, and the file
 component is the path from this directory to FILENAME."
 
-  (let ((path (mapcar 'identity (get-spip-path)))
+  (let ((path (mapcar 'identity (spip-get-path)))
         (result nil)
         (dir nil))
     (while path
@@ -113,12 +113,12 @@ component is the path from this directory to FILENAME."
                                :file (s-chop-prefix dir filepath))))))
     result))
 
-(defun get-spip-overload-targets (filepath)
+(defun spip-get-overload-targets (filepath)
   "Return a list of directories that can be used to overload the
   current file."
 
-  (let ((path (mapcar 'identity (get-spip-path)))
-        (path-components (split-on-path filepath))
+  (let ((path (mapcar 'identity (spip-get-path)))
+        (path-components (spip-split-on-path filepath))
         (result (list))
         (dir nil))
     (while path
@@ -149,12 +149,12 @@ component is the path from this directory to FILENAME."
 
   (mapcar (lambda (dir)
             (cons (format "%s" dir) dir))
-          (get-spip-overload-targets spip-helm-original-file)))
+          (spip-get-overload-targets spip-helm-original-file)))
 
 (defun spip-helm-overload-file (dir)
 
   (let* ((file (plist-get
-                (split-on-path spip-helm-original-file)
+                (spip-split-on-path spip-helm-original-file)
                 :file))
          (filepath (concat spip-root dir file)))
 
@@ -314,7 +314,7 @@ return an explicit version, like 'spip:annuler'."
            (-filter 'file-exists-p
                     (mapcar (lambda (dir)
                               (concat spip-root dir "lang/"))
-                            (get-spip-path))))))
+                            (spip-get-path))))))
 
 (defun spip-jump-to-lang-string-definition ()
   "Jump to the definition of the lang string at point."
