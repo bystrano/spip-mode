@@ -383,27 +383,24 @@ Returns nil if not in a SPIP project."
 
     (spip-get-directory (locate-file "spip.php" parents))))
 
+(defun spip-get-object (php-code)
+
+  (if spip-root
+      (let ((get-json (format "echo json_encode(%s);" php-code))
+            (json-false nil)
+            (json-null nil))
+        (json-read-from-string (spip-eval-php get-json)))
+    (signal 'not-in-spip nil)))
+
 (defun spip-get-path ()
   "Return the vector of the directories that make the SPIP path."
 
-  (if spip-root
-      (let ((json (spip-eval-php "echo json_encode(creer_chemin());"))
-            (json-false nil)
-            (json-null nil))
-        (json-read-from-string json))
-    (signal 'not-in-spip nil)))
+  (spip-get-object "creer_chemin()"))
 
 (defun spip-find-in-path (file)
   "Finds a file in SPIP's path."
 
-  (if spip-root
-      (let ((json (spip-eval-php (format
-                                  "echo json_encode(find_in_path('%s'));"
-                                  file)))
-            (json-false nil)
-            (json-null nil))
-        (json-read-from-string json))
-    (signal 'not-in-spip nil)))
+  (spip-get-object (format "find_in_path('%s')" file)))
 
 (defun spip-translate-lang-string (lang-string &optional lang)
 
