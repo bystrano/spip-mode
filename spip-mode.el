@@ -56,78 +56,6 @@
   "Configures php-mode for SPIP."
   (spip-mode))
 
-(defun spip-get-root ()
-  "Return the root of the current SPIP project.
-Returns nil if not in a SPIP project."
-
-  (let* ((path (directory-file-name
-                (expand-file-name default-directory)))
-         (parents (list path)))
-
-    (while (not (string= path ""))
-      (setq path
-            (mapconcat 'identity
-                       (reverse (cdr (reverse (split-string path "/"))))
-                       "/"))
-      (add-to-list 'parents path))
-
-    (spip-get-directory (locate-file "spip.php" parents))))
-
-(defun spip-get-path ()
-  "Return the vector of the directories that make the SPIP path."
-
-  (if spip-root
-      (let ((json (spip-eval-php "echo json_encode(creer_chemin());"))
-            (json-false nil)
-            (json-null nil))
-        (json-read-from-string json))
-    (signal 'not-in-spip nil)))
-
-(defun spip-find-in-path (file)
-  "Finds a file in SPIP's path."
-
-  (if spip-root
-      (let ((json (spip-eval-php (format
-                                  "echo json_encode(find_in_path('%s'));"
-                                  file)))
-            (json-false nil)
-            (json-null nil))
-        (json-read-from-string json))
-    (signal 'not-in-spip nil)))
-
-(defun spip-split-on-path (filepath)
-  "Extract the path and the file component of FILENAME.
-
-The path component is the path from the spip-root directory to
-the directory in the path to which FILEPATH belongs, and the file
-component is the path from this directory to FILENAME."
-
-  (let ((path (mapcar 'identity (spip-get-path)))
-        (result nil)
-        (dir nil))
-    (while path
-      (setq dir (concat spip-root (pop path)))
-      (if (s-starts-with-p dir filepath)
-          (progn
-            (setq path nil ;; end the loop
-                  result (list :path (s-chop-prefix spip-root dir)
-                               :file (s-chop-prefix dir filepath))))))
-    result))
-
-(defun spip-get-overload-targets (filepath)
-  "Return a list of directories that can be used to overload the
-  current file."
-
-  (let ((path (mapcar 'identity (spip-get-path)))
-        (path-components (spip-split-on-path filepath))
-        (result (list))
-        (dir nil))
-    (while path
-      (setq dir (pop path))
-      (if (equal dir (plist-get path-components :path))
-          (setq path nil) ;; end the loop
-        (setq result (push dir result))))
-    result))
 
 ;;;;;;;;;;
 ;; Helm
@@ -399,6 +327,79 @@ return an explicit version, like 'spip:annuler'."
 
 ;;;;;;;;;;;
 ;; Utils
+
+(defun spip-get-overload-targets (filepath)
+  "Return a list of directories that can be used to overload the
+  current file."
+
+  (let ((path (mapcar 'identity (spip-get-path)))
+        (path-components (spip-split-on-path filepath))
+        (result (list))
+        (dir nil))
+    (while path
+      (setq dir (pop path))
+      (if (equal dir (plist-get path-components :path))
+          (setq path nil) ;; end the loop
+        (setq result (push dir result))))
+    result))
+
+(defun spip-split-on-path (filepath)
+  "Extract the path and the file component of FILENAME.
+
+The path component is the path from the spip-root directory to
+the directory in the path to which FILEPATH belongs, and the file
+component is the path from this directory to FILENAME."
+
+  (let ((path (mapcar 'identity (spip-get-path)))
+        (result nil)
+        (dir nil))
+    (while path
+      (setq dir (concat spip-root (pop path)))
+      (if (s-starts-with-p dir filepath)
+          (progn
+            (setq path nil ;; end the loop
+                  result (list :path (s-chop-prefix spip-root dir)
+                               :file (s-chop-prefix dir filepath))))))
+    result))
+
+(defun spip-get-root ()
+  "Return the root of the current SPIP project.
+Returns nil if not in a SPIP project."
+
+  (let* ((path (directory-file-name
+                (expand-file-name default-directory)))
+         (parents (list path)))
+
+    (while (not (string= path ""))
+      (setq path
+            (mapconcat 'identity
+                       (reverse (cdr (reverse (split-string path "/"))))
+                       "/"))
+      (add-to-list 'parents path))
+
+    (spip-get-directory (locate-file "spip.php" parents))))
+
+(defun spip-get-path ()
+  "Return the vector of the directories that make the SPIP path."
+
+  (if spip-root
+      (let ((json (spip-eval-php "echo json_encode(creer_chemin());"))
+            (json-false nil)
+            (json-null nil))
+        (json-read-from-string json))
+    (signal 'not-in-spip nil)))
+
+(defun spip-find-in-path (file)
+  "Finds a file in SPIP's path."
+
+  (if spip-root
+      (let ((json (spip-eval-php (format
+                                  "echo json_encode(find_in_path('%s'));"
+                                  file)))
+            (json-false nil)
+            (json-null nil))
+        (json-read-from-string json))
+    (signal 'not-in-spip nil)))
 
 (defun spip-translate-lang-string (lang-string &optional lang)
 
