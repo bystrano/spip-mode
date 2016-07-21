@@ -199,25 +199,59 @@ target file already exists, we simply open it."
     (cons start end)))
 
 (defun spip-lang-string-at-point ()
-  "Return the lang string at point, or nil if the point isn't on one."
+  "Return the lang string at point, or nil if the point isn't on one.
+
+If the lang string at point is abbreviated, like 'annuler', we
+return an explicit version, like 'spip:annuler'."
 
   (let* ((reg (spip-font-block-at-point))
          (beg (car reg))
-         (end (cdr reg)))
+         (end (cdr reg))
+         (lang-string nil))
+
     (cond
      ((and (equal mode-name "Web")
            (equal (get-text-property (point) 'face)'
                   web-mode-block-string-face))
       (let ((match (s-match "<:\\(.+\\):>"
                             (buffer-substring-no-properties beg end))))
-        (elt match 1)))
+        (setq lang-string (elt match 1))))
      ((and (equal mode-name "PHP/l")
            (equal (get-text-property (point) 'face)
                   font-lock-string-face))
-      (let ((match (s-match "['\"]\\(.+\\)['\"]"
-                            (buffer-substring-no-properties beg end))))
-        (if (s-contains-p ":" (elt match 1))
-            (elt match 1)))))))
+      (let* ((match (s-match "['\"]\\(.+\\)['\"]"
+                             (buffer-substring-no-properties beg end))))
+        (setq lang-string (elt match 1)))))
+
+    (when (and (stringp lang-string)
+               (s-matches-p "^[[:ascii:]]+$" lang-string))
+      (if (s-contains-p ":" lang-string)
+          lang-string
+        (spip-expand-lang-string lang-string)))))
+
+(defun spip-expand-lang-string (lang-string)
+  "Expand an abbreviated lang string.
+
+'annuler' -> 'spip:annuler'"
+
+  (when (> (length (spip-translate-lang-string lang-string))
+           0)
+    (let ((modules '("local" "spip" "ecrire"))
+          (result nil))
+      (while (> (length modules) 0)
+        (let ((module (pop modules)))
+          (when (s-matches-p
+                 (format "['\"]%s['\"]" lang-string)
+                 (-if-let (file (spip-find-in-path
+                                  (format "lang/%s_fr.php" module)))
+                     (with-temp-buffer
+                       (progn
+                         (insert-file-contents (concat spip-root file))
+                         (buffer-string)))
+                   ""))
+            (setq modules nil ;; exit the loop
+                  result (format "%s:%s" module lang-string)))))
+      result)))
 
 (defun spip-group-lang-modules (module-files)
 
