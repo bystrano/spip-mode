@@ -32,6 +32,7 @@
 (define-error 'spip-mode-error "spip-mode : ")
 (define-error 'not-in-spip "Not in a SPIP installation" 'spip-mode-error)
 (define-error 'no-spip-executable "Couldn't find the spip executable" 'spip-mode-error)
+(define-error 'no-spip-eval-command "SPIP CLI does not support the php:eval command")
 
 (define-minor-mode spip-mode
   "A minor mode for the SPIP CMS."
@@ -415,7 +416,9 @@ return an explicit version, like 'spip:annuler'."
   using SPIP-CLI's php:eval command."
 
   (if (not (string= (shell-command-to-string "which spip") ""))
-      (shell-command-to-string (format "spip php:eval \"%s\"" php-code))
+      (if (string= (shell-command-to-string "spip php:eval \"echo 'test';\"") "test")
+          (shell-command-to-string (format "spip php:eval \"%s\"" php-code))
+        (signal 'no-spip-eval-command nil))
     (signal 'no-spip-executable nil)))
 
 (defun spip-get-directory (filename)
