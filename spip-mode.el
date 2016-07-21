@@ -29,6 +29,10 @@
 (defvar spip-root nil
   "The root directory of the current SPIP project.")
 
+(define-error 'spip-mode-error "spip-mode : ")
+(define-error 'not-in-spip "Not in a SPIP installation" 'spip-mode-error)
+(define-error 'no-spip-executable "Couldn't find the spip executable" 'spip-mode-error)
+
 (define-minor-mode spip-mode
   "A minor mode for the SPIP CMS."
   nil " SPIP " nil
@@ -67,25 +71,24 @@ Returns nil if not in a SPIP project."
 (defun get-spip-path ()
   "Return the vector of the directories that make the SPIP path."
 
-  (condition-case err
-      (json-read-from-string
-       (spip-eval-php "echo json_encode(creer_chemin());"))
-    (end-of-file
-     (error "Couldn't compute path"))
-    (json-readtable-error
-     (error "Couldn't compute path"))))
+  (if spip-root
+      (let ((json (spip-eval-php "echo json_encode(creer_chemin());"))
+            (json-false nil)
+            (json-null nil))
+        (json-read-from-string json))
+    (signal 'not-in-spip nil)))
 
 (defun spip-find-in-path (file)
   "Finds a file in SPIP's path."
 
-  (condition-case err
-      (json-read-from-string
-       (spip-eval-php (format "echo json_encode(find_in_path('%s'));"
-                              file)))
-    (end-of-file
-     (error "Could not find file"))
-    (json-readtable-error
-     (error "Could not find file"))))
+  (if spip-root
+      (let ((json (spip-eval-php (format
+                                  "echo json_encode(find_in_path('%s'));"
+                                  file)))
+            (json-false nil)
+            (json-null nil))
+        (json-read-from-string json))
+    (signal 'not-in-spip nil)))
 
 (defun split-on-path (filepath)
   "Extract the path and the file component of FILENAME.
@@ -162,7 +165,13 @@ Ask for a destination directory, then create a new file at the
 right place and copy the original content inside it. If the
 target file already exists, we simply open it."
   (interactive)
-  (helm :sources '(helm-source-spip-overload)))
+
+  (condition-case err
+      (progn
+        (spip-env-check)
+        (helm :sources '(helm-source-spip-overload)))
+    ('spip-mode-error
+     (spip-handle-error err))))
 
 ;;;;;;;;;;;
 ;; Lang
@@ -273,28 +282,31 @@ target file already exists, we simply open it."
   "Jump to the definition of the lang string at point."
   (interactive)
 
-  (let* ((full-string (spip-lang-string-at-point))
-         (module (car (s-split ":" full-string)))
-         (lang-key (cadr (s-split ":" full-string)))
-         (lang (spip-select-lang))
-         (module-file (spip-find-in-path
-                       (format "lang/%s_%s.php" module lang))))
+  (condition-case err
+      (let* ((full-string (spip-lang-string-at-point))
+             (module (car (s-split ":" full-string)))
+             (lang-key (cadr (s-split ":" full-string)))
+             (lang (spip-select-lang))
+             (module-file (spip-find-in-path
+                           (format "lang/%s_%s.php" module lang))))
 
-    (with-current-buffer (find-file (concat spip-root module-file))
-      (let ((selection-beg nil)
-            (selection-end nil))
-        (goto-line 1)
-        (save-excursion
-          (re-search-forward (format "['\"]%s['\"]" lang-key))
-          (setq selection-beg (re-search-forward "['\"]"))
-          (setq selection-end (- (re-search-forward
-                                  (format "[^\\]%s"
-                                          (buffer-substring (- (point) 1)
-                                                            (point))))
-                                 1)))
-        (goto-char selection-beg)
-        (push-mark selection-end)
-        (setq mark-active t)))))
+        (with-current-buffer (find-file (concat spip-root module-file))
+          (let ((selection-beg nil)
+                (selection-end nil))
+            (goto-line 1)
+            (save-excursion
+              (re-search-forward (format "['\"]%s['\"]" lang-key))
+              (setq selection-beg (re-search-forward "['\"]"))
+              (setq selection-end (- (re-search-forward
+                                      (format "[^\\]%s"
+                                              (buffer-substring (- (point) 1)
+                                                                (point))))
+                                     1)))
+            (goto-char selection-beg)
+            (push-mark selection-end)
+            (setq mark-active t))))
+    ('spip-mode-error
+     (spip-handle-error err))))
 
 (defvar spip-lang nil
   "The currently selected language.")
@@ -348,13 +360,17 @@ target file already exists, we simply open it."
                            (format ", array('spip_lang' => '%s')" lang)
                          ""))
          (command (format "echo _T('%s'%s);" lang-string option-string)))
-    (spip-eval-php command)))
+    (if spip-root
+        (spip-eval-php command)
+      (signal 'not-in-spip nil))))
 
 (defun spip-lire-config (meta)
 
-  (spip-eval-php (format
-                  "include_spip('inc/config'); echo lire_config('%s');"
-                  meta)))
+  (if spip-root
+      (spip-eval-php (format
+                      "include_spip('inc/config'); echo lire_config('%s');"
+                      meta))
+    (signal 'not-in-spip nil)))
 
 (defun spip-eval-php (php-code)
   "Evaluates the given php code in the current SPIP instance
@@ -362,7 +378,7 @@ target file already exists, we simply open it."
 
   (if (not (string= (shell-command-to-string "which spip") ""))
       (shell-command-to-string (format "spip php:eval \"%s\"" php-code))
-    (error "Couldn't find the spip executable.")))
+    (signal 'no-spip-executable nil)))
 
 (defun spip-get-directory (filename)
   "Returns the directory component of FILENAME."
@@ -373,6 +389,16 @@ target file already exists, we simply open it."
                  (mapconcat  'identity
                              (reverse (cdr (reverse (split-string filename "/"))))
                              "/")))))
+
+(defun spip-env-check ()
+  "Return t if we are in a SPIP install with the CLI installed."
+
+  (if spip-root
+      (string= "1" (spip-eval-php "echo _ECRIRE_INC_VERSION;"))
+    (signal 'not-in-spip nil)))
+
+(defun spip-handle-error (err)
+  (message "SPIP-mode: %s" (error-message-string err)))
 
 (provide spip-mode)
 ;;; spip-mode.el ends here
