@@ -29,7 +29,7 @@
 (defvar spip-root nil
   "The root directory of the current SPIP project.")
 
-(define-error 'spip-mode-error "spip-mode : ")
+(define-error 'spip-mode-error "SPIP mode error")
 (define-error 'not-in-spip "Not in a SPIP installation" 'spip-mode-error)
 (define-error 'no-spip-executable "Couldn't find the spip executable" 'spip-mode-error)
 (define-error 'no-spip-eval-command "SPIP CLI does not support the php:eval command")
@@ -267,7 +267,7 @@ return an explicit version, like 'spip:annuler'."
         (with-current-buffer (find-file (concat spip-root module-file))
           (let ((selection-beg nil)
                 (selection-end nil))
-            (goto-line 1)
+            (goto-char (point-min))
             (save-excursion
               (re-search-forward (format "['\"]%s['\"]" lang-key))
               (setq selection-beg (re-search-forward "['\"]"))
@@ -285,19 +285,17 @@ return an explicit version, like 'spip:annuler'."
 (defvar spip-lang nil
   "The currently selected language.")
 
-(defvar helm-source-spip-active-lang nil
+(defvar helm-source-spip-active-lang
+  '((name . "Langues actives")
+    (candidates . spip-get-active-languages)
+    (action . (("Select" . spip-helm-select-lang))))
   "Configuration of the spip-select-lang-command.")
-(setq helm-source-spip-active-lang
-      '((name . "Langues actives")
-        (candidates . spip-get-active-languages)
-        (action . (("Select" . spip-helm-select-lang)))))
 
-(defvar helm-source-spip-existing-lang nil
+(defvar helm-source-spip-available-lang
+  '((name . "Langues proposées")
+   (candidates . spip-get-available-languages)
+   (action . (("Select" . spip-helm-select-lang))))
   "Configuration of the spip-select-lang-command.")
-(setq helm-source-spip-available-lang
-      '((name . "Langues proposées")
-        (candidates . spip-get-available-languages)
-        (action . (("Select" . spip-helm-select-lang)))))
 
 (defun spip-get-active-languages ()
 
