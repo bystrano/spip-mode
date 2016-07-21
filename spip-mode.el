@@ -429,7 +429,8 @@ Returns nil if not in a SPIP project."
 
   (if (not (string= (shell-command-to-string "which spip") ""))
       (if (string= (shell-command-to-string "spip php:eval \"echo 'test';\"") "test")
-          (shell-command-to-string (format "spip php:eval \"%s\"" php-code))
+          (shell-command-to-string
+           (format "spip php:eval '%s'" (s-replace "'" "\\'" php-code)))
         (signal 'no-spip-eval-command nil))
     (signal 'no-spip-executable nil)))
 
