@@ -448,19 +448,25 @@ Returns nil if not in a SPIP project."
 
   (spip-get-object (format "find_in_path('%s')" file)))
 
+(defvar spip-language-list nil)
+
 (defun spip-get-language-list ()
 
-  (if spip-root
-      (let ((get-json (concat
-                       "include_spip('inc/lang_liste');"
-                       "echo json_encode("
-                       "array_map('html_entity_decode', $GLOBALS['codes_langues'])"
-                       ");"
-                       ))
-            (json-false nil)
-            (json-null nil))
-        (json-read-from-string (spip-eval-php get-json)))
-    (signal 'not-in-spip nil)))
+  (if (not (equal spip-language-list nil))
+      spip-language-list
+    (if spip-root
+        (let ((get-json (concat
+                         "include_spip('inc/lang_liste');"
+                         "echo json_encode("
+                         "array_map('html_entity_decode', $GLOBALS['codes_langues'])"
+                         ");"
+                         ))
+              (json-false nil)
+              (json-null nil))
+          (setq spip-language-list
+                (json-read-from-string (spip-eval-php get-json)))
+          spip-language-list)
+      (signal 'not-in-spip nil))))
 
 (defun spip-translate-lang-string (lang-string &optional lang)
 
