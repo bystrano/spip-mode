@@ -132,8 +132,12 @@ component is the path from this directory to FILENAME."
 ;;;;;;;;;;
 ;; Helm
 
-(defvar spip-helm-original-file nil
+(defvar spip-helm-env-file nil
   "The file that was open when spip-overload was called. internal
+  use only")
+
+(defvar spip-helm-env-root nil
+  "The value of spip-root when spip-overload was called. internal
   use only")
 
 (defvar helm-source-spip-overload
@@ -144,24 +148,27 @@ component is the path from this directory to FILENAME."
   "Configuration of the spip-overload Helm command.")
 
 (defun spip-helm-overload-init ()
-  (setq spip-helm-original-file buffer-file-name))
+  (setq spip-helm-env-root spip-root
+        spip-helm-env-file buffer-file-name))
 
 (defun spip-helm-overload-candidates ()
 
-  (mapcar (lambda (dir)
-            (cons (format "%s" dir) dir))
-          (spip-get-overload-targets spip-helm-original-file)))
+  (let ((spip-root spip-helm-env-root))
+    (mapcar (lambda (dir)
+              (cons (format "%s" dir) dir))
+            (spip-get-overload-targets spip-helm-env-file))))
 
 (defun spip-helm-overload-file (dir)
 
-  (let* ((file (plist-get
-                (spip-split-on-path spip-helm-original-file)
+  (let* ((spip-root spip-helm-env-root)
+         (file (plist-get
+                (spip-split-on-path spip-helm-env-file)
                 :file))
          (filepath (concat spip-root dir file)))
 
     (find-file filepath)
     (if (not (file-exists-p filepath))
-        (insert-file-contents spip-helm-original-file))))
+        (insert-file-contents spip-helm-env-file))))
 
 (defun spip-overload ()
   "Overload the current file.
