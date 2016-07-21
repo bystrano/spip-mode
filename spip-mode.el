@@ -56,63 +56,6 @@
   "Configures php-mode for SPIP."
   (spip-mode))
 
-
-;;;;;;;;;;
-;; Helm
-
-(defvar spip-helm-env-file nil
-  "The file that was open when spip-overload was called. internal
-  use only")
-
-(defvar spip-helm-env-root nil
-  "The value of spip-root when spip-overload was called. internal
-  use only")
-
-(defvar helm-source-spip-overload
-  '((name . "SPIP overload")
-    (candidates . spip-helm-overload-candidates)
-    (init . spip-helm-overload-init)
-    (action . (("Overload" . spip-helm-overload-file))))
-  "Configuration of the spip-overload Helm command.")
-
-(defun spip-helm-overload-init ()
-  (setq spip-helm-env-root spip-root
-        spip-helm-env-file buffer-file-name))
-
-(defun spip-helm-overload-candidates ()
-
-  (let ((spip-root spip-helm-env-root))
-    (mapcar (lambda (dir)
-              (cons (format "%s" dir) dir))
-            (spip-get-overload-targets spip-helm-env-file))))
-
-(defun spip-helm-overload-file (dir)
-
-  (let* ((spip-root spip-helm-env-root)
-         (file (plist-get
-                (spip-split-on-path spip-helm-env-file)
-                :file))
-         (filepath (concat spip-root dir file)))
-
-    (find-file filepath)
-    (if (not (file-exists-p filepath))
-        (insert-file-contents spip-helm-env-file))))
-
-(defun spip-overload ()
-  "Overload the current file.
-
-Ask for a destination directory, then create a new file at the
-right place and copy the original content inside it. If the
-target file already exists, we simply open it."
-  (interactive)
-
-  (condition-case err
-      (progn
-        (spip-env-check)
-        (helm :sources '(helm-source-spip-overload)))
-    ('spip-mode-error
-     (spip-handle-error err))))
-
 ;;;;;;;;;;;
 ;; Lang
 
@@ -279,6 +222,62 @@ return an explicit version, like 'spip:annuler'."
             (goto-char selection-beg)
             (push-mark selection-end)
             (setq mark-active t))))
+    ('spip-mode-error
+     (spip-handle-error err))))
+
+;;;;;;;;;;
+;; Helm
+
+(defvar spip-helm-env-file nil
+  "The file that was open when spip-overload was called. internal
+  use only")
+
+(defvar spip-helm-env-root nil
+  "The value of spip-root when spip-overload was called. internal
+  use only")
+
+(defvar helm-source-spip-overload
+  '((name . "SPIP overload")
+    (candidates . spip-helm-overload-candidates)
+    (init . spip-helm-overload-init)
+    (action . (("Overload" . spip-helm-overload-file))))
+  "Configuration of the spip-overload Helm command.")
+
+(defun spip-helm-overload-init ()
+  (setq spip-helm-env-root spip-root
+        spip-helm-env-file buffer-file-name))
+
+(defun spip-helm-overload-candidates ()
+
+  (let ((spip-root spip-helm-env-root))
+    (mapcar (lambda (dir)
+              (cons (format "%s" dir) dir))
+            (spip-get-overload-targets spip-helm-env-file))))
+
+(defun spip-helm-overload-file (dir)
+
+  (let* ((spip-root spip-helm-env-root)
+         (file (plist-get
+                (spip-split-on-path spip-helm-env-file)
+                :file))
+         (filepath (concat spip-root dir file)))
+
+    (find-file filepath)
+    (if (not (file-exists-p filepath))
+        (insert-file-contents spip-helm-env-file))))
+
+(defun spip-overload ()
+  "Overload the current file.
+
+Ask for a destination directory, then create a new file at the
+right place and copy the original content inside it. If the
+target file already exists, we simply open it."
+  (interactive)
+
+  (condition-case err
+      (progn
+        (spip-env-check)
+        (helm :sources '(helm-source-spip-overload)))
     ('spip-mode-error
      (spip-handle-error err))))
 
