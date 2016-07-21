@@ -298,11 +298,14 @@ target file already exists, we simply open it."
     (action . (("Select" . spip-helm-select-lang))))
   "Configuration of the spip-select-lang-command.")
 
+(defun spip-format-lang (lang)
+  (spip-translate-lang-string "spip:0_langue" lang))
+
 (defun spip-get-active-languages ()
 
   (let ((spip-root spip-helm-env-root))
     (mapcar (lambda (lang)
-              (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
+              (cons (spip-format-lang lang) lang))
             (if (> (length (spip-lire-config "langues_multilingue")) 0)
                 (s-split "," (spip-lire-config "langues_multilingue"))
               (list (spip-lire-config "langue_site"))))))
@@ -312,7 +315,6 @@ target file already exists, we simply open it."
   (let ((spip-root spip-helm-env-root))
     (mapcar (lambda (lang)
               (cons (format "%s" lang) lang))
-            ;; (cons (spip-translate-lang-string "spip:0_langue" lang) lang))
             (s-split "," (spip-lire-config "langues_proposees")))))
 
 (defun spip-helm-select-lang (lang)
