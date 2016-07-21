@@ -195,6 +195,9 @@ return an explicit version, like 'spip:annuler'."
                               (concat spip-root dir "lang/"))
                             (spip-get-path))))))
 
+(defconst spip-lang-key-regexp
+  "^[[:space:]]*['\"]\\(%s\\)['\"][[:space:]]*=>")
+
 (defun spip-jump-to-lang-string-definition ()
   "Jump to the definition of the lang string at point."
   (interactive)
@@ -211,20 +214,60 @@ return an explicit version, like 'spip:annuler'."
             (let ((selection-beg nil)
                   (selection-end nil))
               (goto-char (point-min))
-              (save-excursion
-                (re-search-forward (format "['\"]%s['\"]" lang-key))
-                (setq selection-beg (re-search-forward "['\"]"))
-                (setq selection-end (- (re-search-forward
-                                        (format "[^\\]%s"
-                                                (buffer-substring (- (point) 1)
-                                                                  (point))))
-                                       1)))
-              (goto-char selection-beg)
-              (push-mark selection-end)
-              (setq mark-active t)))
+              (when (not (s-matches-p
+                          (format spip-lang-key-regexp lang-key)
+                          (buffer-string)))
+                (spip-insert-lang-string lang-key module-file))
+              (spip-select-lang-string lang-key module-file)))
         (message "Not a lang string"))
     ('spip-mode-error
      (spip-handle-error err))))
+
+(defun spip-select-lang-string (key module-file)
+
+  (goto-char (point-min))
+  (re-search-forward (format spip-lang-key-regexp lang-key))
+  (setq selection-beg (re-search-forward "['\"]"))
+  (goto-char (- (point) 1))
+  (setq selection-end (- (re-search-forward
+                          (format "[^\\]%s"
+                                  (buffer-substring (point)
+                                                    (+ (point) 1))))
+                         1))
+  (goto-char selection-beg)
+  (push-mark selection-end)
+  (setq mark-active (not (equal selection-beg selection-end))))
+
+(defun spip-insert-lang-string (key module-file)
+
+  (-if-let* ((fullpath (concat spip-root module-file))
+             (current-keys (mapcar (lambda (match) (elt match 1))
+                                   (s-match-strings-all
+                                    (format spip-lang-key-regexp "[^'\"]+")
+                                    (with-temp-buffer
+                                      (insert-file-contents fullpath)
+                                      (buffer-string)))))
+             (nearest-key (let ((key-mask key)
+                                (result nil))
+                            (while (and (equal result nil)
+                                        (> (length key-mask) 0))
+                              (let ((matching-keys (-filter
+                                                    (lambda (key)
+                                                      (s-starts-with? key-mask key))
+                                                    current-keys)))
+                                (when (> (length matching-keys) 0)
+                                  (setq result (car matching-keys))))
+                              (setq key-mask
+                                    (substring key-mask 0 (- (length key-mask) 1))))
+                            result)))
+
+      (progn
+        (re-search-forward (format spip-lang-key-regexp nearest-key))
+        (goto-char (line-end-position))
+        (push-mark (line-end-position))
+        (setq mark-active t)
+        (insert (format "\n\t'%s' => ''," key)))
+    (error "Could't find a place to insert lang string")))
 
 ;;;;;;;;;;
 ;; Helm
