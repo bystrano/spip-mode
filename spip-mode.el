@@ -259,19 +259,10 @@ return an explicit version, like 'spip:annuler'."
                                     (with-temp-buffer
                                       (insert-file-contents fullpath)
                                       (buffer-string)))))
-             (nearest-key (let ((key-mask key)
-                                (result nil))
-                            (while (and (equal result nil)
-                                        (> (length key-mask) 0))
-                              (let ((matching-keys (-filter
-                                                    (lambda (key)
-                                                      (s-starts-with? key-mask key))
-                                                    current-keys)))
-                                (when (> (length matching-keys) 0)
-                                  (setq result (car matching-keys))))
-                              (setq key-mask
-                                    (substring key-mask 0 (- (length key-mask) 1))))
-                            result)))
+             (nearest-key (car (reverse
+                                (-filter (lambda (current-key)
+                                           (s-less? current-key key))
+                                         current-keys)))))
 
       (progn
         (re-search-forward (format spip-lang-key-regexp nearest-key))
