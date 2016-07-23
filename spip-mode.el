@@ -222,11 +222,15 @@ return an explicit version, like 'spip:annuler'."
             (let ((selection-beg nil)
                   (selection-end nil))
               (goto-char (point-min))
-              (when (not (s-matches-p
+              (if (not (s-matches-p
                           (format spip-lang-key-regexp lang-key)
                           (buffer-string)))
-                (spip-insert-lang-string lang-key module-file))
-              (spip-select-lang-string lang-key module-file)))
+                  (if (y-or-n-p "Lang string doesn't exist. Create a new one ?")
+                      (progn
+                        (spip-insert-lang-string lang-key module-file)
+                        (spip-select-lang-string lang-key module-file))
+                    (kill-buffer))
+                (spip-select-lang-string lang-key module-file))))
         (message "Not a lang string"))
     ('spip-mode-error
      (spip-handle-error err))))
