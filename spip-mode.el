@@ -497,6 +497,16 @@ Returns nil if not in a SPIP project."
                       meta))
     (signal 'not-in-spip nil)))
 
+(defun spip-php-eval-region (reg-beg reg-end)
+  "Evaluate php code in the active region in a SPIP context."
+  (interactive "r")
+
+  (let ((code (buffer-substring-no-properties reg-beg reg-end)))
+    (condition-case err
+        (pp (spip-eval-php code))
+      ('spip-mode-error
+       (spip-handle-error err)))))
+
 (defun spip-eval-php (php-code)
   "Evaluates the given php code in the current SPIP instance
   using SPIP-CLI's php:eval command."
