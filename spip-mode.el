@@ -56,6 +56,10 @@
   "Configures php-mode for SPIP."
   (spip-mode))
 
+(defun spip-mode-nxml-mode-config ()
+  "Configures nxml-mode for SPIP."
+  (spip-mode))
+
 ;;;;;;;;;;;
 ;; Lang
 
@@ -104,7 +108,11 @@ return an explicit version, like 'spip:annuler'."
                   font-lock-string-face))
       (let* ((match (s-match "['\"]\\(.+\\)['\"]"
                              (buffer-substring-no-properties beg end))))
-        (setq lang-string (elt match 1)))))
+        (setq lang-string (elt match 1))))
+     ((and (equal mode-name "nXML")
+           (equal (get-text-property (point) 'face)
+                  '(nxml-attribute-value)))
+      (setq lang-string (buffer-substring-no-properties beg end))))
 
     (when (and (stringp lang-string)
                (s-matches-p "^[[:ascii:]]+$" lang-string))
