@@ -238,17 +238,18 @@ return an explicit version, like 'spip:annuler'."
 (defun spip-select-lang-string (key module-file)
 
   (goto-char (point-min))
-  (re-search-forward (format spip-lang-key-regexp lang-key))
-  (setq selection-beg (re-search-forward "['\"]"))
-  (goto-char (- (point) 1))
-  (setq selection-end (- (re-search-forward
-                          (format "[^\\]%s"
-                                  (buffer-substring (point)
-                                                    (+ (point) 1))))
-                         1))
-  (goto-char selection-beg)
-  (push-mark selection-end)
-  (setq mark-active (not (equal selection-beg selection-end))))
+  (re-search-forward (format spip-lang-key-regexp key))
+  (let ((selection-beg (re-search-forward "['\"]"))
+        (selection-end nil))
+    (goto-char (- (point) 1))
+    (setq selection-end (- (re-search-forward
+                            (format "[^\\]%s"
+                                    (buffer-substring (point)
+                                                      (+ (point) 1))))
+                           1))
+    (goto-char selection-beg)
+    (push-mark selection-end)
+    (setq mark-active (not (equal selection-beg selection-end)))))
 
 (defun spip-insert-lang-string (key module-file)
 
