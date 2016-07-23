@@ -259,18 +259,23 @@ return an explicit version, like 'spip:annuler'."
                                     (format spip-lang-key-regexp "[^'\"]+")
                                     (with-temp-buffer
                                       (insert-file-contents fullpath)
-                                      (buffer-string)))))
-             (nearest-key (car (reverse
-                                (-filter (lambda (current-key)
-                                           (s-less? current-key key))
-                                         current-keys)))))
+                                      (buffer-string))))))
 
-      (progn
-        (re-search-forward (format spip-lang-key-regexp nearest-key))
-        (goto-char (line-end-position))
-        (push-mark (line-end-position))
-        (setq mark-active t)
-        (insert (format "\n\t'%s' => ''," key)))
+      (let ((predecessor (car (reverse
+                               (-filter (lambda (current-key)
+                                          (s-less? current-key key))
+                                        current-keys)))))
+        (if predecessor
+            (progn
+              (re-search-forward (format spip-lang-key-regexp predecessor))
+              (goto-char (line-end-position))
+              (push-mark (line-end-position))
+              (setq mark-active t)
+              (insert (format "\n\t'%s' => ''," key)))
+          (progn
+            (re-search-forward (format spip-lang-key-regexp "[^'\"]+"))
+            (goto-char (line-beginning-position))
+            (insert (format "\t'%s' => '',\n" key)))))
     (error "Could't find a place to insert lang string")))
 
 ;;;;;;;;;;
