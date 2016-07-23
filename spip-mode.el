@@ -377,6 +377,7 @@ target file already exists, we simply open it."
 (defun spip-select-lang ()
   "Return a language code chosen by the user."
 
+  (setq spip-helm-env-lang nil)
   (helm :sources '(helm-source-spip-active-lang
                    helm-source-spip-available-lang))
   spip-helm-env-lang)
