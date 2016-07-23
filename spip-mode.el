@@ -351,9 +351,7 @@ target file already exists, we simply open it."
   "Configuration of the spip-select-lang-command.")
 
 (defun spip-format-lang (lang)
-  (spip-eval-php
-   (concat "include_spip('inc/lang_liste');"
-           (format "echo html_entity_decode($GLOBALS['codes_langues']['%s']);" lang))))
+  (cdr (assoc-string lang (spip-get-language-list))))
 
 (defun spip-get-active-languages ()
 
