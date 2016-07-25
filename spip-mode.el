@@ -215,8 +215,14 @@ return an explicit version, like 'spip:annuler'."
                  (module (car (s-split ":" full-string)))
                  (lang-key (cadr (s-split ":" full-string)))
                  (lang (spip-select-lang))
-                 (module-file (spip-find-in-path
-                               (format "lang/%s_%s.php" module lang))))
+                 (module-file
+                  (or (spip-find-in-path
+                       (format "lang/%s_%s.php" module lang))
+                      (when (y-or-n-p
+                             (format
+                              "Module '%s_%s' doesn't exist. Create a new module file ?"
+                              module lang))
+                        (spip-insert-lang-module module lang lang-key)))))
 
           (with-current-buffer (find-file (concat spip-root module-file))
             (let ((selection-beg nil)
@@ -234,6 +240,28 @@ return an explicit version, like 'spip:annuler'."
         (message "Not a lang string"))
     ('spip-mode-error
      (spip-handle-error err))))
+
+(defcustom spip-lang-module-template
+  "<?php
+// This is a SPIP language file  --  Ceci est un fichier langue de SPIP
+
+$GLOBALS[$GLOBALS['idx_lang']] = array(
+	'%s' => '',
+);
+"
+  "Le template pour les fichiers de langues créés par spip-mode.")
+
+(defun spip-insert-lang-module (module lang key)
+  "Create a new lang module file in a user-chosen directory."
+
+  (-when-let* ((module-file-name (format "lang/%s_%s.php" module lang))
+               (dir (spip-select-overload-dir module-file-name))
+               (file-path (concat spip-root dir module-file-name)))
+    (find-file file-path)
+    (insert (format spip-lang-module-template key))
+    (make-directory (spip-get-directory file-path))
+    (save-buffer)
+    (kill-buffer)))
 
 (defun spip-select-lang-string (key module-file)
 
@@ -291,6 +319,8 @@ return an explicit version, like 'spip:annuler'."
 
 (defvar spip-helm-env-lang nil
   "The currently selected language.")
+
+(defvar spip-helm-env-overload-dir nil)
 
 (defvar helm-source-spip-overload
   '((name . "SPIP overload")
@@ -382,6 +412,21 @@ target file already exists, we simply open it."
   (helm :sources '(helm-source-spip-active-lang
                    helm-source-spip-available-lang))
   spip-helm-env-lang)
+
+(defvar helm-source-spip-select-overload-dir
+  '((name . "Select directory")
+    (candidates . spip-helm-overload-candidates)
+    (action . (("Select" . spip-helm-select-overload-dir-action)))))
+
+(defun spip-helm-select-overload-dir-action (dir)
+  (setq spip-helm-env-overload-dir dir))
+
+(defun spip-select-overload-dir (file)
+  (setq spip-helm-env-root spip-root
+        spip-helm-env-file file
+        spip-helm-env-overload-dir nil)
+  (helm :sources '(helm-source-spip-select-overload-dir))
+  spip-helm-env-overload-dir)
 
 ;;;;;;;;;;;
 ;; Utils
