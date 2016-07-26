@@ -206,12 +206,28 @@ return an explicit version, like 'spip:annuler'."
 (defconst spip-lang-key-regexp
   "^[[:space:]]*['\"]\\(%s\\)['\"][[:space:]]*=>")
 
-(defun spip-jump-to-lang-string-definition ()
+(defun spip-make-new-lang-string (reg-beg reg-end)
+  "Make a new lang string with the current region."
+  (interactive "r")
+
+  (-if-let* ((text (buffer-substring-no-properties reg-beg reg-end))
+             (lang-string (read-string
+                           "insert lang string name (module:lang-string) : "))
+             (is-valid (s-matches-p "^[-_a-z0-9]+:[-_a-z0-9]+$"
+                                    lang-string)))
+
+      (spip-jump-to-lang-string-definition lang-string
+                                           (lambda ()
+                                             (insert text)))
+    (user-error "Not a valid lang string")))
+
+(defun spip-jump-to-lang-string-definition (&optional lang-string callback)
   "Jump to the definition of the lang string at point."
   (interactive)
 
   (condition-case err
-      (-if-let* ((full-string (spip-lang-string-at-point))
+      (-if-let* ((full-string (or lang-string
+                                  (spip-lang-string-at-point)))
                  (module (car (s-split ":" full-string)))
                  (lang-key (cadr (s-split ":" full-string)))
                  (lang (spip-select-lang))
@@ -234,10 +250,13 @@ return an explicit version, like 'spip:annuler'."
                   (if (y-or-n-p "Lang string doesn't exist. Create a new one ?")
                       (progn
                         (spip-insert-lang-string lang-key module-file)
-                        (spip-select-lang-string lang-key module-file))
+                        (spip-select-lang-string lang-key module-file)
+                        (funcall callback))
                     (kill-buffer))
-                (spip-select-lang-string lang-key module-file))))
-        (message "Not a lang string"))
+                (progn
+                  (spip-select-lang-string lang-key module-file)
+                  (funcall callback)))))
+        (user-error "Not a lang string"))
     ('spip-mode-error
      (spip-handle-error err))))
 
