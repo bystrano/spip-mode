@@ -599,5 +599,5 @@ Returns nil if not in a SPIP project."
 (defun spip-handle-error (err)
   (message "SPIP-mode: %s" (error-message-string err)))
 
-(provide spip-mode)
+(provide 'spip-mode)
 ;;; spip-mode.el ends here
