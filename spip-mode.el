@@ -25,6 +25,7 @@
 (require 'json)
 (require 's)
 (require 'dash)
+(require 'ert)
 
 (defvar spip-root nil
   "The root directory of the current SPIP project.")
