@@ -16,9 +16,16 @@
 ;;; d'y copier le contenu du fichier actuel et de l'ouvrir dans
 ;;; un nouveau buffer.
 
-;;; TODO:
-
 ;;; Fournit des commandes pour la gestion des chaînes de langue
+
+;;; Installation:
+
+;;; Il faut activer SPIP mode sur les modes que l'on souhaite utiliser.
+;;; p.ex :
+;;;   (add-hook 'web-mode-hook 'spip-mode-web-mode-config)
+;;;   (add-hook 'php-mode-hook 'spip-mode-php-mode-config)
+;;;   (add-hook 'nxml-mode-hook 'spip-mode-nxml-mode-config)
+;;;   (add-hook 'css-mode-hook 'spip-mode-css-mode-config)
 
 ;;; Code:
 
