@@ -3,11 +3,8 @@ SPIP-mode
 
 Un mode mineur pour le CMS SPIP (http://spip.net).
 
-Configure Emacs pour le CMS SPIP. Web-mode colore les boucles, filtres
-et balises SPIP.
-
-On fournit également des commandes utiles pour la surcharge de
-fichiers et la gestion des chaînes de langue.
+Active automatiquement la coloration syntaxique des squelettes SPIP
+dans web-mode, et ajoute des commandes utiles.
 
 Installation
 ------------
@@ -37,6 +34,12 @@ php dans un contexte SPIPien, i.e. de charger les fichiers et
 librairies de SPIP avant l'exécution.
 
 La commande `spip-jump-to-lang-string-definition` s'utilise après
-avoir placé le curseur sur une chaîne de langue. On choisit alors
-la langue pour laquelle on souhaite voir la définition de la chaîne
-de langue.
+avoir placé le curseur sur une chaîne de langue. On choisit alors la
+langue pour laquelle on souhaite voir la définition de la chaîne de
+langue. Si cette chaîne de langue n'existe pas encore, on propose de
+la créer automatiquement au bon endroit.
+
+La commande `spip-make-new-lang-string` permet de créer
+automatiquement une chaîne de langue à partir de la région
+sélectionnée. On saisit alors le nom de la chaîne de langue, qui est
+alors ajoutée dans le bon fichier.

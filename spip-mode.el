@@ -21,7 +21,7 @@
 ;;; Commentary:
 
 ;; Un mode mineur pour le CMS SPIP (http://spip.net).
-;; Se référer au fichier README.md pour plus de documentation.
+;; Se référer au fichier README.md pour la documentation.
 
 ;;; Code:
 
