@@ -1,31 +1,27 @@
 ;;; spip-mode.el --- Un mode mineur pour SPIP
 
+;; Version: 0.9.0
+;; URL: https://github.com/bystrano/spip-mode
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING. If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
 ;;; Commentary:
 
-;;; Un mode mineur pour le CMS SPIP (http://spip.net).
-
-;;; Configure web-mode, php-mode et javascript mode pour le CMS
-;;; SPIP. PHP-mode utilise les règles de codage SPIPiennes,
-;;; web-mode colore les boucles, filtres et balise SPIP.
-
-;;; Fournit une commande Helm pour la gestion des surcharges de
-;;; fichiers du core. La commande spip-overload permet de
-;;; surcharger le fichier courant. On propose une liste de
-;;; répertoires candidats pour la surcharge, et la commande se
-;;; charge ensuite de créer un nouveau fichier au bon endroit,
-;;; d'y copier le contenu du fichier actuel et de l'ouvrir dans
-;;; un nouveau buffer.
-
-;;; Fournit des commandes pour la gestion des chaînes de langue
-
-;;; Installation:
-
-;;; Il faut activer SPIP mode sur les modes que l'on souhaite utiliser.
-;;; p.ex :
-;;;   (add-hook 'web-mode-hook 'spip-mode-web-mode-config)
-;;;   (add-hook 'php-mode-hook 'spip-mode-php-mode-config)
-;;;   (add-hook 'nxml-mode-hook 'spip-mode-nxml-mode-config)
-;;;   (add-hook 'css-mode-hook 'spip-mode-css-mode-config)
+;; Un mode mineur pour le CMS SPIP (http://spip.net).
+;; Se référer au fichier README.md pour plus de documentation.
 
 ;;; Code:
 
