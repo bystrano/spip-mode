@@ -61,6 +61,10 @@
   "Configures nxml-mode for SPIP."
   (spip-mode))
 
+(defun spip-mode-css-mode-config ()
+  "Configures css-mode for SPIP"
+  (spip-mode))
+
 ;;;;;;;;;;;
 ;; Lang
 
