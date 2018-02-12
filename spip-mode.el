@@ -1,6 +1,6 @@
 ;;; spip-mode.el --- Un mode mineur pour SPIP
 
-;; Version: 0.9.0
+;; Version: 0.9.1
 ;; URL: https://github.com/bystrano/spip-mode
 
 ;; This program is free software; you can redistribute it and/or
@@ -214,19 +214,36 @@ return an explicit version, like 'spip:annuler'."
 (defconst spip-lang-key-regexp
   "^[[:space:]]*['\"]\\(%s\\)['\"][[:space:]]*=>")
 
-(defun spip-make-new-lang-string (reg-beg reg-end)
-  "Make a new lang string with the current region."
-  (interactive "r")
+(defun spip-trim-char (string chars)
+  "Trim one of the CHARS characters from STRING and return the result."
 
-  (-if-let* ((text (buffer-substring-no-properties reg-beg reg-end))
+  (s-replace-regexp
+   (format "^[%s]" chars)
+   ""
+   (s-replace-regexp (format "[%s]$" chars) "" string)))
+
+(defun spip-make-new-lang-string ()
+  "Make a new lang string with the current region."
+  (interactive)
+
+  (-if-let* ((region (spip-font-block-at-point))
+             (reg-beg (car region))
+             (reg-end (cdr region))
+             (text (spip-trim-char
+                    (buffer-substring-no-properties reg-beg reg-end)
+                    "'\""))
              (lang-string (read-string
                            "insert lang string name (module:lang-string) : "))
              (is-valid (s-matches-p "^[-_a-z0-9]+:[-_a-z0-9]+$"
                                     lang-string)))
-
-      (spip-jump-to-lang-string-definition lang-string
-                                           (lambda ()
-                                             (insert text)))
+      (progn
+        (delete-region reg-beg reg-end)
+        (insert (format
+                 (if (string-equal major-mode "php-mode") "_T('%s')" "<:%s:>")
+                 lang-string))
+        (spip-jump-to-lang-string-definition lang-string
+                                             (lambda ()
+                                               (insert text))))
     (user-error "Not a valid lang string")))
 
 (defun spip-jump-to-lang-string-definition (&optional lang-string callback)
