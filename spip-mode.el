@@ -1,6 +1,6 @@
 ;;; spip-mode.el --- Un mode mineur pour SPIP
 
-;; Version: 0.9.1
+;; Version: 0.9.2
 ;; URL: https://github.com/bystrano/spip-mode
 
 ;; This program is free software; you can redistribute it and/or
@@ -263,7 +263,8 @@ return an explicit version, like 'spip:annuler'."
                              (format
                               "Module '%s_%s' doesn't exist. Create a new module file ?"
                               module lang))
-                        (spip-insert-lang-module module lang lang-key)))))
+                        (spip-insert-lang-module module lang lang-key))))
+                 (callback (if (functionp callback) callback (lambda ()))))
 
           (with-current-buffer (find-file (concat spip-root module-file))
             (let ((selection-beg nil)
