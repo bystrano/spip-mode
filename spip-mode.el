@@ -135,7 +135,7 @@ return an explicit version, like 'spip:annuler'."
 
   (when (> (length (spip-translate-lang-string lang-string))
            0)
-    (let ((modules '("local" "spip" "ecrire"))
+    (let ((modules '("local" "spip" "ecrire" "public"))
           (result nil))
       (while (> (length modules) 0)
         (let ((module (pop modules)))
