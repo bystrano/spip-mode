@@ -1,6 +1,6 @@
 ;;; spip-mode.el --- Un mode mineur pour SPIP
 
-;; Version: 0.9.2
+;; Version: 0.9.3
 ;; URL: https://github.com/bystrano/spip-mode
 
 ;; This program is free software; you can redistribute it and/or
@@ -590,7 +590,7 @@ Returns nil if not in a SPIP project."
 
   (let ((code (buffer-substring-no-properties reg-beg reg-end)))
     (condition-case err
-        (pp (spip-eval-php code))
+        (message "%s" (spip-eval-php code))
       ('spip-mode-error
        (spip-handle-error err)))))
 
