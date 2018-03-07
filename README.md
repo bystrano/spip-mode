@@ -9,6 +9,9 @@ dans web-mode, et ajoute des commandes utiles.
 Installation
 ------------
 
+Pour que toutes les commandes fonctionnent correctement, il faut avoir installé
+[spip-cli](https://contrib.spip.net/SPIP-Cli).
+
 Il faut activer SPIP mode sur les modes que l'on souhaite utiliser, en
 ajoutant le code suivant dans sont fichier `.emacs` :
 
